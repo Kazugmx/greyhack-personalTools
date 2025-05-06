@@ -1,0 +1,70 @@
+desc = []; vulnList = []
+
+desc.push("<b>Swiss-Army knife for Shell takedown - SAKSTY</b>")
+desc.push("If <b>[TargetService]</b> is omitted, you will be prompted to select one after listing available targets.")
+
+vulnList.push("smtp|0x748DA1AF|tedoubledcod")
+
+EXP_TARGET_LIST = function()
+	print("-- Exploitation available for --")
+	expTarget = []
+	iter_ct = 0
+	for target in vulnList
+		iter_ct = iter_ct + 1
+		if iter_ct != 4 then
+			expTarget.push(target.split("\|")[0])
+		else
+			expTarget = expTarget.push(target.split("\|")[0]+"\n")
+		end if
+	end for
+	print(expTarget.join(" "))
+	print("--------------------------------")
+end function
+
+if params.len < 2 or params[0] == "-h" or params[0] == "--help" then
+	for str in desc
+		print(str)
+	end for
+	
+	EXP_TARGET_LIST()
+
+	exit("<b>Usage: "+program_path.split("/")[-1]+" <ip_address> <port> [TargetService]</b>")
+end if
+
+msflib = include_lib("/lib/metaxploit.so")
+if not msflib then
+	msflib = include_lib(current_path + "/metaxploit.so")
+end if
+if not msflib then exit("Error: Can't find metaxploit.so in the lib&local paths.")
+
+RHOST = params[0]
+RPORT = params[1].to_int
+
+if params.len == 2 then
+	EXP_TARGET_LIST()
+	targetService = user_input("Exploit target service >")
+else
+	targetService = params[2]
+end if
+
+for oFlowTarget in vulnList
+	searchBuffer = oFlowTarget.split("\|")
+	if searchBuffer[0] == targetService then
+		memspace = searchBuffer[1]
+		unsafeVar = searchBuffer[2]
+		targetService = null
+	end if
+end for
+if targetService != null then exit("ERROR: invalid input to select exploitation target.")
+
+sock = msflib.net_use(RHOST,RPORT)
+if not sock then exit("Error: Can't connect to the socket.")
+
+sessInit = sock.dump_lib.overflow(memspace,unsafeVar)
+
+if not sessInit then exit("Program ended")
+if typeof(sessInit) == "shell" then
+	sessInit.start_terminal
+else
+	print("Error: expected shell, obtained: " + sessInit)
+end if

@@ -1,0 +1,63 @@
+desc = []; vulnList = []
+
+desc.push("<b>passHash&library Revealer for smtp v1.0.0</b>")
+
+memspace = "0x748DA1AF"
+unsafeVar = "gthoffsetfocu"
+
+if params.len != 2 or params[0] == "-h" or params[0] == "--help" then
+	for str in desc
+		print(str)
+	end for
+	exit("<b>Usage: "+program_path.split("/")[-1]+" <ip_address> <port></b>")
+end if
+
+msflib = include_lib("/lib/metaxploit.so")
+if not msflib then
+	msflib = include_lib(current_path + "/metaxploit.so")
+end if
+if not msflib then exit("Error: Can't find metaxploit.so in the lib&local paths.")
+
+RHOST = params[0]
+RPORT = params[1].to_int
+
+sock = msflib.net_use(RHOST,RPORT)
+if not sock then exit("Error: Can't connect to the socket.")
+
+sessInit = sock.dump_lib.overflow(memspace,unsafeVar)
+if not sessInit then exit("Program ended")
+
+
+if typeof(sessInit) == "computer" then
+	users = []
+	print("----------")
+	files = sessInit.File("/lib").get_files
+	for file in files
+        print(file.path)
+    end for
+	print("----------")
+	file = sessInit.File("/etc/passwd")
+	if file.has_permission("r") then
+    	content = file.get_content
+		for line in content.split("\n")
+			if line == "" then continue
+			print(line)
+			users.push(line.split(":")[0])
+		end for
+	else
+		print("Permission denied. Failed to read /etc/passwd")
+	end if
+	print("----------")
+	for px in users
+		if px == "root" or px == "" then continue
+		tfile = sessInit.File("/home/"+px+"/Config/Bank.txt")
+		if tfile != null then print(tfile.get_content)
+	end for
+	print("----------")
+	for px in users
+		tfile = sessInit.File("/home/"+px+"/Config/Mail.txt")
+		if tfile != null then print(tfile.get_content)
+	end for
+else
+	print("Error: expected computer, obtained: " + sessInit)
+end if

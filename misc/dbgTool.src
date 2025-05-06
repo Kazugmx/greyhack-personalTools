@@ -1,0 +1,117 @@
+sep_line = "------------------------------------------"
+
+
+if not params.len >= 3  then
+	print("ERROR: Invalid arguments.")
+	print("<b>Usage: "+program_path.split("/")[-1]+" [ip_address] [port] [MemSpace] [UnsafeArray]</b>")
+	exit("<b>Usage(Local): "+program_path.split("/")[-1]+" local [MemSpace] [UnsafeArray]</b>")
+end if
+
+EXPLOITATION_TARGET = params[0]
+
+//local Lib
+msflib = include_lib("/lib/metaxploit.so")
+if not msflib then
+	msflib = include_lib(current_path + "/metaxploit.so")
+end if
+if not msflib then exit("Error: Can't find metaxploit.so in the lib&local paths.")
+
+libreq = user_input("Do you need additional Libraries? Y/N",false) 
+if libreq == "Y" or libreq == "y" then
+	aptcli = msflib.load("/lib/aptclient.so")
+	crypt = include_lib("/lib/crypto.so")
+	
+	
+	print("---Loaded libraries----")
+	print("")
+	if aptcli then print("aptclient.so")
+	if crypt then print("crypto.so")
+	print("")
+	print("-----------------------")
+end if
+
+//functions
+shell_takedown = function(f_sock)
+	print(sep_line)
+	print("Vulnerable memory zone: "+memspace)
+	print("Vulnerable variable: "+unsafeVar)
+    print(sep_line)
+	f_sock.overflow(memspace,unsafeVar).start_terminal
+end function
+
+alter_pass = function(f_sock)
+    new_pass = user_input("enter password to replace >")
+    f_sock.overflow(memspace,unsafeVar,new_pass)
+end function
+
+rev_files = function(f_sock)
+    gsock = f_sock.overflow(memspace,unsafeVar)
+	if typeof(gsock) == "computer" then
+		t_dir = user_input("enter target directory >")
+		files = gsock.File(t_dir).get_files
+		folders = gsock.File(t_dir).get_folders
+	else
+		files = gsock
+	end if
+    for file in files
+        print(file.path)
+    end for
+	for folder in folders
+        print(folder.path)
+    end for
+end function
+
+crash_func = function(f_sock)
+    f_sock.overflow(memspace,unsafeVar)
+end function
+
+read_file = function(f_sock)
+	readpath = user_input("enter file path >")
+	file = f_sock.overflow(memspace,unsafeVar).File(readpath)
+	if file.has_permission("r") then
+    	content = file.get_content
+		print(content)
+	else
+		exit("Permission denied.")
+	end if
+end function
+
+
+//params
+if EXPLOITATION_TARGET == "local" then
+	memspace = params[1]
+	unsafeVar = params[2]
+	targetlib = user_input("target lib directory >")
+	sock = msflib.load(targetlib)
+else
+	RHOST = params[0]
+	RPORT = params[1]
+	if RPORT == "router" then
+        sock = msflib.net_use(RHOST)
+	else
+        sock = msflib.net_use(RHOST,RPORT.to_int)
+	end if
+	if not sock then exit("Error: Can't connect to the socket.")
+	sock = sock.dump_lib
+	memspace = params[2]
+	unsafeVar = params[3]
+end if
+print(sock)
+print("type :"+typeof(sock.overflow(memspace,unsafeVar)))
+print(sep_line)
+print(" grab shell   : shell ")
+print(" Alter pass   : altpw ")
+print(" reveal files : reveal_file ")
+print(" crash FW     : crash_fw ")
+print(" read File    : read_file ")
+print(sep_line)
+exploitlib = user_input("Enter to use >")
+
+if exploitlib == "shell" then shell_takedown(sock)
+if exploitlib == "altpw" then alter_pass(sock)
+if exploitlib == "reveal_file" then rev_files(sock)
+if exploitlib == "crash_fw" then crash_func(sock)
+if exploitlib == "read_file" then read_file(sock)
+print(sep_line)
+print("Vulnerable memory zone: "+memspace)
+print("Vulnerable variable: "+unsafeVar)

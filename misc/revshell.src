@@ -1,0 +1,4 @@
+msf = include_lib("/lib/metaxploit.so")
+if not msf then msf = include_lib(current_path+"/metaxploit.so")
+if not msf then exit("Error: MetaXploit library not found.") 
+rshell_client(msf,"87.85.80.183",8088,"kerne1_task")

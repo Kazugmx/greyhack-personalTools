@@ -1,0 +1,36 @@
+memspace = "MEM_ADDR"
+unsafeVar = "VARIABLE"
+desc = []
+
+desc.push("<b>Tool to grab shell with #PLACER# </b>")
+desc.push("TargetAddr : "+memspace)
+desc.push("targetVar  : "+unsafeVar+"\n")
+
+
+if params.len != 2 or params[0] == "-h" or params[0] == "--help" then
+	for str in desc
+		print(str)
+	end for
+	exit("<b>Usage: "+program_path.split("/")[-1]+" [ip_address] [port]</b>")
+end if
+
+msflib = include_lib("/lib/metaxploit.so")
+if not msflib then
+	msflib = include_lib(current_path + "/metaxploit.so")
+end if
+if not msflib then exit("Error: Can't find metaxploit.so in the lib&local paths.")
+
+RHOST = params[0]
+RPORT = params[1].to_int
+
+sock = msflib.net_use(RHOST,RPORT)
+if not sock then exit("Error: Can't connect to the socket.")
+
+sessInit = sock.dump_lib.overflow(memspace,unsafeVar)
+
+if not sessInit then exit("Program ended")
+if typeof(sessInit) == "shell" then
+	sessInit.start_terminal
+else
+	print("Error: expected shell, obtained: " + sessInit)
+end if

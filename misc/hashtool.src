@@ -1,0 +1,17 @@
+cryptolib = include_lib("/lib/crypto.so")
+if not cryptolib then exit("ERROR: crypto.so not exists in lib directory.")
+
+while true
+	hashdata = user_input("hash > ").split(":")
+	if hashdata[0] == "exit" or hashdata[0] == ""  then
+		exit()
+	else if hashdata[0] == "clear" then
+		clear_screen
+	else if hashdata.len != 2 then
+		print("ERROR: Invalid input. \n content:"+hashdata)
+		continue
+	end if
+	hashdata[1] = cryptolib.decipher(hashdata[1])
+	print("id: "+hashdata[0])
+	print("pw: "+hashdata[1])
+end while

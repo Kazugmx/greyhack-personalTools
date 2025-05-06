@@ -1,0 +1,27 @@
+sep_line = "------------------------------------------"
+
+if params.len != 1  then
+	print("ERROR: Invalid arguments.")
+	exit("<b>Usage: "+program_path.split("/")[-1]+" <target-lib></b>")
+end if
+
+TARGET = params[0]
+//local Lib
+msflib = include_lib("/lib/metaxploit.so")
+if not msflib then
+	msflib = include_lib(current_path + "/metaxploit.so")
+end if
+if not msflib then exit("Error: Can't find metaxploit.so in the lib&local paths.")
+
+print("<b>Scanning library :"+params[0].split("/")[-1]+"</b>")
+lib = msflib.load(TARGET)
+if lib == null then exit("ERROR : Failed to load library.")
+addrList = msflib.scan(lib)
+vuln = [""]
+
+for mem in addrList
+	result = msflib.scan_address(lib,mem).split("decompiling source...\nsearching unsecure values...")[-1]
+	print(sep_line+"\n\n"+"Vulnerable Address zone: "+mem)
+	print(result)
+end for
+print(sep_line)
