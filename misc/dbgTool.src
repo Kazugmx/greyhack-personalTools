@@ -66,8 +66,13 @@ crash_func = function(f_sock)
 end function
 
 read_file = function(f_sock)
-	readpath = user_input("enter file path >")
-	file = f_sock.overflow(memspace,unsafeVar).File(readpath)
+	tf = f_sock.overflow(memspace,unsafeVar)
+	if typeof(tf) == "file" then
+		file = tf
+	else
+		readpath = user_input("enter file path >")
+		file = tf.File(readpath)
+	end if
 	if file.has_permission("r") then
     	content = file.get_content
 		print(content)

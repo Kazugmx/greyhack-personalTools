@@ -1,9 +1,10 @@
 desc = []; vulnList = []
 
-desc.push("<b>Swiss-Army knife for Shell takedown - SAKSTY</b>")
+desc.push("<b>Swiss-Army knife for Shell takedown - SKELD</b>")
 desc.push("If <b>[TargetService]</b> is omitted, you will be prompted to select one after listing available targets.")
 
 vulnList.push("smtp|0x748DA1AF|tedoubledcod")
+vulnList.push("ssh|0x6B214D03|aorb")
 
 EXP_TARGET_LIST = function()
 	print("-- Exploitation available for --")
@@ -39,6 +40,7 @@ if not msflib then exit("Error: Can't find metaxploit.so in the lib&local paths.
 
 RHOST = params[0]
 RPORT = params[1].to_int
+print(desc[0])
 
 if params.len == 2 then
 	EXP_TARGET_LIST()
