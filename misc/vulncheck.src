@@ -2,7 +2,7 @@ sep_line = "------------------------------------------"
 
 if params.len != 1  then
 	print("ERROR: Invalid arguments.")
-	exit("<b>Usage: "+program_path.split("/")[-1]+" <target-lib></b>")
+	exit("<b>Usage: "+program_path.split("/")[-1]+" <target-lib or addr></b>")
 end if
 
 TARGET = params[0]
@@ -13,9 +13,14 @@ if not msflib then
 end if
 if not msflib then exit("Error: Can't find metaxploit.so in the lib&local paths.")
 
-print("<b>Scanning library :"+params[0].split("/")[-1]+"</b>")
+
 lib = msflib.load(TARGET)
-if lib == null then exit("ERROR : Failed to load library.")
+if not lib == null then print("<b>Scanning library :"+params[0].split("/")[-1]+"</b>")
+if lib == null then
+	PORT = user_input("port num >").to_int
+	lib = msflib.net_use(TARGET,PORT).dump_lib
+	if lib == null then exit("ERROR: Failed to establish the connection.")
+end if
 addrList = msflib.scan(lib)
 vuln = [""]
 
