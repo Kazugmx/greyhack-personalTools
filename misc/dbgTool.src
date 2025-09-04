@@ -1,10 +1,10 @@
 sep_line = "------------------------------------------"
 
 
-if not params.len >= 3  then
+if not params.len == 4  then
 	print("ERROR: Invalid arguments.")
 	print("<b>Usage: "+program_path.split("/")[-1]+" [ip_address] [port] [MemSpace] [UnsafeArray]</b>")
-	exit("<b>Usage(Local): "+program_path.split("/")[-1]+" local [MemSpace] [UnsafeArray]</b>")
+	exit("<b>Usage(Local): "+program_path.split("/")[-1]+" local [libPath] [MemSpace] [UnsafeArray]</b>")
 end if
 
 EXPLOITATION_TARGET = params[0]
@@ -15,20 +15,6 @@ if not msflib then
 	msflib = include_lib(current_path + "/metaxploit.so")
 end if
 if not msflib then exit("Error: Can't find metaxploit.so in the lib&local paths.")
-
-libreq = user_input("Do you need additional Libraries? Y/N",false) 
-if libreq == "Y" or libreq == "y" then
-	aptcli = msflib.load("/lib/aptclient.so")
-	crypt = include_lib("/lib/crypto.so")
-	
-	
-	print("---Loaded libraries----")
-	print("")
-	if aptcli then print("aptclient.so")
-	if crypt then print("crypto.so")
-	print("")
-	print("-----------------------")
-end if
 
 //functions
 shell_takedown = function(f_sock)
@@ -84,9 +70,9 @@ end function
 
 //params
 if EXPLOITATION_TARGET == "local" then
-	memspace = params[1]
-	unsafeVar = params[2]
-	targetlib = user_input("target lib directory >")
+	targetlib = params[1]
+	memspace = params[2]
+	unsafeVar = params[3]
 	sock = msflib.load(targetlib)
 else
 	RHOST = params[0]
@@ -101,6 +87,7 @@ else
 	memspace = params[2]
 	unsafeVar = params[3]
 end if
+
 print(sock)
 print("type :"+typeof(sock.overflow(memspace,unsafeVar)))
 print(sep_line)
